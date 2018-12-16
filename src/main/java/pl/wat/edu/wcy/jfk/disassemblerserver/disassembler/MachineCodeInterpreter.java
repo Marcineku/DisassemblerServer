@@ -1,5 +1,8 @@
 package pl.wat.edu.wcy.jfk.disassemblerserver.disassembler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -7,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MachineCodeInterpreter {
+    private static final Logger logger = LoggerFactory.getLogger(MachineCodeInterpreter.class);
+
     private List<List<InstructionPatternParser.InstructionPattern>> oneByteInstructions;
     private List<List<InstructionPatternParser.InstructionPattern>> twoByteInstructions;
 
@@ -53,6 +58,24 @@ public class MachineCodeInterpreter {
             for (int j = 0x05; j <= 0x3D; j += 8) {
                 if (i == j) {
                     size += 4;
+                }
+            }
+
+            for (int j = 0x04; j <= 0x3C; j += 8) {
+                if (i == j) {
+                    size += 1;
+                }
+            }
+
+            for (int j = 0x44; j <= 0x7C; j += 8) {
+                if (i == j) {
+                    size += 1;
+                }
+            }
+
+            for (int j = 0x84; j <= 0xBC; j += 8) {
+                if (i == j) {
+                    size += 1;
                 }
             }
 
@@ -381,7 +404,23 @@ public class MachineCodeInterpreter {
                     priOpcodeSize += 1;
                 }
 
-                InstructionPatternParser.InstructionPattern instr = instructions.get(b).get(0);
+                InstructionPatternParser.InstructionPattern instr;
+                if (instructions.get(b).size() > 0) {
+                    instr = instructions.get(b).get(0);
+                }
+                else {
+                    String whichInstrSet;
+                    if (instructions.equals(oneByteInstructions)) {
+                        whichInstrSet = "One Byte";
+                    } else {
+                        whichInstrSet = "Two Byte";
+                    }
+
+                    logger.error(whichInstrSet + ": " + String.format("%08X ", p + imageBase + codeTables.get(l).getVirtualAdress()) + String.format("%02X ", list.get(p)) + String.format("%02X", b));
+                    p += 1;
+
+                    continue;
+                }
 
                 // Trying to get second byte in one-byte instr or third byte in two-byte instr
                 if (p + priOpcodeSize < list.size()) {
@@ -390,22 +429,10 @@ public class MachineCodeInterpreter {
                     if (instr.getOpcode().contains("/r")) {
                         length += slashRSize.get(b2);
 
-                        // Checking if SIB Byte is used
                         boolean sibByte = false;
                         for (int j = 0x04; j <= 0x3C; j += 8) {
                             if (b2 == j) {
-                                length += 1;
                                 sibByte = true;
-                            }
-                        }
-                        for (int j = 0x44; j <= 0x7C; j += 8) {
-                            if (b2 == j) {
-                                length += 1;
-                            }
-                        }
-                        for (int j = 0x84; j <= 0xBC; j += 8) {
-                            if (b2 == j) {
-                                length += 1;
                             }
                         }
 
@@ -422,7 +449,7 @@ public class MachineCodeInterpreter {
                         String digit = slashDigit.get(b2);
                         for (int i = 0; i < instructions.get(b).size(); ++i) {
                             InstructionPatternParser.InstructionPattern instruction = instructions.get(b).get(i);
-                            if (instruction.getOpcode().substring(2 * priOpcodeSize, 2 + 2 * priOpcodeSize).equals(digit)) {
+                            if (instruction.getOpcode().contains(digit)) {
                                 instr = instruction;
                                 length += slashRSize.get(b2);
                             }
@@ -431,18 +458,7 @@ public class MachineCodeInterpreter {
                         boolean sibByte = false;
                         for (int j = 0x04; j <= 0x3C; j += 8) {
                             if (b2 == j) {
-                                length += 1;
                                 sibByte = true;
-                            }
-                        }
-                        for (int j = 0x44; j <= 0x7C; j += 8) {
-                            if (b2 == j) {
-                                length += 1;
-                            }
-                        }
-                        for (int j = 0x84; j <= 0xBC; j += 8) {
-                            if (b2 == j) {
-                                length += 1;
                             }
                         }
 
@@ -529,7 +545,7 @@ public class MachineCodeInterpreter {
                     if (opByte.equals("+rb")) {
                         HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
                         byte base = hexBinaryAdapter.unmarshal(instr.getOpcode().substring(0, 2))[0];
-                        int rByte = list.get(p) - base;
+                        int rByte = list.get(p + priOpcodeSize - 1) - base;
 
                         for (int j = 0; j < operands.length; ++j) {
                             if (operands[j].equals("reg8") || operands[j].equals("r8")) {
@@ -539,7 +555,7 @@ public class MachineCodeInterpreter {
                     } else if (opByte.equals("+rw") || opByte.equals("+rd")) {
                         HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
                         byte base = hexBinaryAdapter.unmarshal(instr.getOpcode().substring(0, 2))[0];
-                        int rByte = list.get(p) - base;
+                        int rByte = list.get(p + priOpcodeSize - 1) - base;
 
                         for (int j = 0; j < operands.length; ++j) {
                             if (operands[j].equals("r32") || operands[j].equals("reg32")) {
@@ -626,6 +642,45 @@ public class MachineCodeInterpreter {
                                 }
                                 int disp32 = byteBuffer.getInt(0);
                                 operands[j] = String.format("%08X", disp32);
+                            }
+
+                            if (operands[j].contains("[--]")) {
+                                int sib = list.get(p + priOpcodeSize + 1) & 0xFF;
+                                String sibScaledIndex = scaledIndex.get(sib);
+
+                                boolean sibByte = false;
+                                for (int k = 0x04; k <= 0x3C; k += 8) {
+                                    if (slashRByte == k) {
+                                        sibByte = true;
+                                    }
+                                }
+
+                                boolean isDisp32 = false;
+                                // Checking for disp32 following SIB Byte
+                                if (sibByte) {
+                                    for (int k = 0x05; k <= 0xFD; k += 8) {
+                                        if (sib == k) {
+                                            isDisp32 = true;
+                                        }
+                                    }
+                                }
+
+                                if (sibScaledIndex.equals("")) {
+                                    operands[j] = "[" + sibr32.get(sib) + "]";
+                                } else {
+                                    operands[j] = "[" + sibr32.get(sib) + " + " + scaledIndex.get(sib) + "]";
+                                }
+
+                                if (isDisp32) {
+                                    ByteBuffer byteBuffer = ByteBuffer.allocate(4);
+                                    byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+                                    for (int k = p + priOpcodeSize + 2; k < p + priOpcodeSize + 2 + 4; ++k) {
+                                        byteBuffer.put(list.get(k));
+                                    }
+                                    int disp32 = byteBuffer.getInt(0);
+
+                                    operands[j] = "[" + scaledIndex.get(sib)  + " + " + String.format("%08X]", disp32);
+                                }
                             }
 
                             if (operands[j].contains("Sreg")) {

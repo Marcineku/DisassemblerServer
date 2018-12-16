@@ -254,6 +254,7 @@ public class InstructionPatternParser {
             List<InstructionPattern> list = lists.get(i);
             if (list.size() != 5) continue;
             InstructionPattern xchg = list.get(2);
+            xchg.opcode = xchg.opcode + "d";
             for (int j = 0x91; j <= 0x97; ++j) {
                 lists.get(j).add(xchg);
             }
@@ -558,13 +559,88 @@ public class InstructionPatternParser {
 
         lists.get(0xDB).add(new InstructionPattern((byte)0xDB, "DBE2", "FNCLEX", "", 2));
 
+        lists.get(0xD8).add(new InstructionPattern((byte)0xD8, "D8/0", "FADD", "m32fp", 2));
+        lists.get(0xD8).add(new InstructionPattern((byte)0xD8, "D8/1", "FMUL", "m32fp", 2));
+        lists.get(0xD8).add(new InstructionPattern((byte)0xD8, "D8/2", "FCOM", "m32fp", 2));
+        lists.get(0xD8).add(new InstructionPattern((byte)0xD8, "D8/3", "FCOMP", "m32fp", 2));
+        lists.get(0xD8).add(new InstructionPattern((byte)0xD8, "D8/4", "FSUB", "m32fp", 2));
+        lists.get(0xD8).add(new InstructionPattern((byte)0xD8, "D8/5", "FSUBR", "m32fp", 2));
+        lists.get(0xD8).add(new InstructionPattern((byte)0xD8, "D8/6", "FDIV", "m32fp", 2));
+        lists.get(0xD8).add(new InstructionPattern((byte)0xD8, "D8/7", "FDIVR", "m32fp", 2));
+
+        lists.get(0xD9).add(new InstructionPattern((byte)0xD9, "D9/0", "FLD", "m32fp", 2));
+        lists.get(0xD9).add(new InstructionPattern((byte)0xD9, "D9/2", "FST", "m32fp", 2));
+        lists.get(0xD9).add(new InstructionPattern((byte)0xD9, "D9/3", "FSTP", "m32fp", 2));
+        lists.get(0xD9).add(new InstructionPattern((byte)0xD9, "D9/4", "FLDENV", "m14/28byte", 2));
+        lists.get(0xD9).add(new InstructionPattern((byte)0xD9, "D9/5", "FLDCW", "m2byte", 2));
+        lists.get(0xD9).add(new InstructionPattern((byte)0xD9, "D9/6", "FNSTENV", "m14/28byte", 2));
+        lists.get(0xD9).add(new InstructionPattern((byte)0xD9, "D9/7", "FNSTCW", "m2byte", 2));
+
+        lists.get(0xDE).add(new InstructionPattern((byte)0xDE, "DE/0", "FIADD", "m16int", 2));
+        lists.get(0xDE).add(new InstructionPattern((byte)0xDE, "DE/1", "FIMUL", "m16int", 2));
+        lists.get(0xDE).add(new InstructionPattern((byte)0xDE, "DE/2", "FICOM", "m16int", 2));
+        lists.get(0xDE).add(new InstructionPattern((byte)0xDE, "DE/3", "FICOMP", "m16int", 2));
+        lists.get(0xDE).add(new InstructionPattern((byte)0xDE, "DE/4", "FISUB", "m16int", 2));
+        lists.get(0xDE).add(new InstructionPattern((byte)0xDE, "DE/5", "FISUBR", "m16int", 2));
+        lists.get(0xDE).add(new InstructionPattern((byte)0xDE, "DE/6", "FIDIV", "m16int", 2));
+        lists.get(0xDE).add(new InstructionPattern((byte)0xDE, "DE/7", "FIDIVR", "m16int", 2));
+
+        lists.get(0xDD).add(new InstructionPattern((byte)0xDD, "DD/0", "FLD", "m64fp", 2));
+        lists.get(0xDD).add(new InstructionPattern((byte)0xDD, "DD/1", "FISTTP", "m64int", 2));
+        lists.get(0xDD).add(new InstructionPattern((byte)0xDD, "DD/2", "FST", "m64fp", 2));
+        lists.get(0xDD).add(new InstructionPattern((byte)0xDD, "DD/3", "FSTP", "m64fp", 2));
+        lists.get(0xDD).add(new InstructionPattern((byte)0xDD, "DD/4", "FRSTOR", "m94/108byte", 2));
+        lists.get(0xDD).add(new InstructionPattern((byte)0xDD, "DD/6", "FNSAVE", "m94/108byte", 2));
+        lists.get(0xDD).add(new InstructionPattern((byte)0xDD, "DD/7", "FNSTSW", "m2byte", 2));
+
         twoBytes.get(0x1B).add(new InstructionPattern((byte)0x1B, "0F1B/r", "BNDSTX", "mib,bnd", 3));
         twoBytes.get(0x1A).add(new InstructionPattern((byte)0x1A, "0F1A/r", "BNDLDX", "bnd,mib", 3));
         twoBytes.get(0xB0).add(new InstructionPattern((byte)0xB0, "0FB0/r", "CMPXCHG", "r/m8,r8", 3));
-        twoBytes.get(0xB1).add(new InstructionPattern((byte)0xB1, "0FB1/r", "CMPXCHG", "r/m32, r32", 3));
+        twoBytes.get(0xB1).add(new InstructionPattern((byte)0xB1, "0FB1/r", "CMPXCHG", "r/m32,r32", 3));
         twoBytes.get(0xA2).add(new InstructionPattern((byte)0xA2, "0FA2", "CPUID", "", 2));
         twoBytes.get(0x01).add(0, new InstructionPattern((byte)0x01, "0F01D1", "XSETBV", "", 3));
         twoBytes.get(0x01).add(0, new InstructionPattern((byte)0x01, "0F01D0", "XGETBV", "", 3));
+
+        twoBytes.get(0x57).add(new InstructionPattern((byte)0x57, "0F57/r", "XORPS", "xmm1,xmm2/m128", 3));
+        twoBytes.get(0x13).add(new InstructionPattern((byte)0x13, "0F13/r", "MOVLPD", "m64,xmm1", 3));
+        twoBytes.get(0x10).add(new InstructionPattern((byte)0x10, "0F10/r", "MOVUPS", "xmm1,xmm2/m128", 3));
+        twoBytes.get(0x11).add(new InstructionPattern((byte)0x11, "0F11/r", "MOVUPS", "xmm2/m128,xmm1", 3));
+
+        twoBytes.get(0x42).add(new InstructionPattern((byte)0x42, "0F42/r", "CMOVB", "r32,r/m32", 3));
+        twoBytes.get(0x43).add(new InstructionPattern((byte)0x43, "0F43/r", "CMOVAE", "r32,r/m32", 3));
+        twoBytes.get(0x44).add(new InstructionPattern((byte)0x44, "0F44/r", "CMOVE", "r32,r/m32", 3));
+        twoBytes.get(0x45).add(new InstructionPattern((byte)0x45, "0F45/r", "CMOVNE", "r32,r/m32", 3));
+        twoBytes.get(0x46).add(new InstructionPattern((byte)0x46, "0F46/r", "CMOVBE", "r32,r/m32", 3));
+        twoBytes.get(0x47).add(new InstructionPattern((byte)0x47, "0F47/r", "CMOVA", "r32,r/m32", 3));
+        twoBytes.get(0x48).add(new InstructionPattern((byte)0x48, "0F48/r", "CMOVS", "r32,r/m32", 3));
+        twoBytes.get(0x4C).add(new InstructionPattern((byte)0x4C, "0F4C/r", "CMOVL", "r32,r/m32", 3));
+        twoBytes.get(0x4D).add(new InstructionPattern((byte)0x4D, "0F4D/r", "CMOVGE", "r32,r/m32", 3));
+        twoBytes.get(0x4E).add(new InstructionPattern((byte)0x4E, "0F4E/r", "CMOVLE", "r32,r/m32", 3));
+        twoBytes.get(0x4F).add(new InstructionPattern((byte)0x4F, "0F4F/r", "CMOVG", "r32,r/m32", 3));
+
+        twoBytes.get(0x6E).add(new InstructionPattern((byte)0x6E, "0F6E/r", "MOVD", "mm,r/m32", 3));
+        twoBytes.get(0x7E).add(new InstructionPattern((byte)0x7E, "0F7E/r", "MOVD", "r/m32, mm", 3));
+
+        twoBytes.get(0xC0).add(new InstructionPattern((byte)0xC0, "0FC0/r", "XADD", "r/m8,r8", 3));
+        twoBytes.get(0xC1).add(new InstructionPattern((byte)0xC1, "0FC1/r", "XADD", "r/m32,r32", 3));
+
+        twoBytes.get(0x5B).add(new InstructionPattern((byte)0x5B, "0F5B/r", "CVTDQ2PS", "xmm1,xmm2/m128", 3));
+        twoBytes.get(0x2C).add(new InstructionPattern((byte)0x2C, "0F2C/r", "CVTTSS2SI", "r32,xmm1/m32", 3));
+        twoBytes.get(0x5A).add(new InstructionPattern((byte)0x5A, "0F5A/r", "CVTPS2PD", "xmm1,xmm2/m64", 3));
+        twoBytes.get(0xE6).add(new InstructionPattern((byte)0xE6, "0FE6/r", "CVTDQ2PD", "xmm1,xmm2/m64", 3));
+        twoBytes.get(0x2E).add(new InstructionPattern((byte)0x2E, "0F2E/r", "UCOMISD", "xmm1,xmm2/m64", 3));
+        twoBytes.get(0x28).add(new InstructionPattern((byte)0x28, "0F28/r", "MOVAPS", "xmm1,xmm2/m128", 3));
+        twoBytes.get(0x29).add(new InstructionPattern((byte)0x29, "0F29/r", "MOVAPS", "xmm2/m128,xmm1", 3));
+
+        twoBytes.get(0x5C).add(new InstructionPattern((byte)0x5C, "0F5C/r", "SUBSS", "xmm1,xmm2/m32", 3));
+        twoBytes.get(0x2F).add(new InstructionPattern((byte)0x2F, "0F2F/r", "COMISS", "xmm1,xmm2/m32", 3));
+        twoBytes.get(0x59).add(new InstructionPattern((byte)0x59, "0F59/r", "MULSS", "xmm1,xmm2/m32", 3));
+        twoBytes.get(0x58).add(new InstructionPattern((byte)0x58, "0F58/r", "ADDPS", "xmm1,xmm2/m128", 3));
+        twoBytes.get(0x5E).add(new InstructionPattern((byte)0x5E, "0F5E/r", "DIVPS", "xmm1,xmm2/m128", 3));
+        twoBytes.get(0x54).add(new InstructionPattern((byte)0x54, "0F54/r", "ANDPS", "xmm1,xmm2/m128", 3));
+        twoBytes.get(0x5F).add(new InstructionPattern((byte)0x5F, "0F5F/r", "MAXSS", "xmm1,xmm2/m32", 3));
+
+        twoBytes.get(0x1F).add(new InstructionPattern((byte)0x1F, "0F1F/0", "NOP", "r/m32", 3));
 
         this.oneByteInstructions = lists;
         this.twoByteInstructions = twoBytes;
