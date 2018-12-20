@@ -30,7 +30,7 @@ public class FileController {
             PEFile peFile = new PEFile(file.getInputStream());
 
             if (!peFile.isPE()) {
-                logger.error("It is not a PE file");
+                logger.warn(file.getOriginalFilename() + " is not a PE file");
                 return interpretedInstructions;
             }
             logger.info(file.getOriginalFilename() + " successfully uploaded!");

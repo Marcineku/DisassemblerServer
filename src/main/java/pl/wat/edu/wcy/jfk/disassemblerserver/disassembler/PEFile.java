@@ -189,6 +189,11 @@ public class PEFile {
                 pe.add(exe.get(i));
             }
 
+            if (pe.size() <= 4) {
+                isPE = false;
+                return;
+            }
+
             ByteBuffer byteBuffer = ByteBuffer.allocate(4);
             byteBuffer.order(ByteOrder.BIG_ENDIAN);
             byteBuffer.put(pe.get(0x00));
