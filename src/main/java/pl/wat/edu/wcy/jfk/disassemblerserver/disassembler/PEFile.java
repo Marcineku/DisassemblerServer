@@ -1,6 +1,8 @@
 package pl.wat.edu.wcy.jfk.disassemblerserver.disassembler;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +27,11 @@ public class PEFile {
     private int imageBase;
 
     private boolean isPE;
+
+    public PEFile(byte[] machineCode) {
+        code = new Code(machineCode);
+        codeTables = code.codeTables;
+    }
 
     public PEFile(InputStream inputStream) {
         machineCode = new ArrayList<>();
@@ -181,6 +188,11 @@ public class PEFile {
         private List<Byte> pe;
         private List<SectionTable> codeTables;
 
+        public Code(byte[] machineCode) {
+            codeTables = new ArrayList<>();
+            codeTables.add(new SectionTable(".text".toCharArray(), machineCode.length, 0, 0, 0, 0, 0, (short) 0, (short) 0, 0, 0));
+        }
+
         public Code() {
             pe = new ArrayList<>();
             codeTables = new ArrayList<>();
@@ -272,6 +284,8 @@ public class PEFile {
         }
 
         @Getter
+        @NoArgsConstructor
+        @AllArgsConstructor
         public class SectionTable {
             private char[] name;
             private int misc;
@@ -286,7 +300,7 @@ public class PEFile {
 
             private int pos;
 
-            private SectionTable(int tableAddr) {
+            public SectionTable(int tableAddr) {
                 name = new char[8];
                 pos = tableAddr;
 

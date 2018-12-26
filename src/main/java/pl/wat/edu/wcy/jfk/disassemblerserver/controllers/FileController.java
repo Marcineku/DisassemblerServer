@@ -22,7 +22,7 @@ public class FileController {
         List<List<InterpretedInstruction>> interpretedInstructions = null;
 
         if (file == null) {
-            logger.error("File not found");
+            logger.warn("File not found");
             return interpretedInstructions;
         }
 
