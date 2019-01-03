@@ -10,7 +10,7 @@ public class App {
     public static MachineCodeInterpreter machineCodeInterpreter;
 
     public static void main(String[] args) {
-        String i386path = "src/main/resources/files/i386.pdf";
+        String i386path = "i386.pdf";
         InstructionPatternParser instructionPatternParser = new InstructionPatternParser(i386path);
         machineCodeInterpreter = new MachineCodeInterpreter(instructionPatternParser.getOneByteInstructions(), instructionPatternParser.getTwoByteInstructions());
 
