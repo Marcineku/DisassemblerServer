@@ -35,7 +35,7 @@ public class FileController {
             }
             logger.info(file.getOriginalFilename() + " successfully uploaded!");
 
-            interpretedInstructions = App.machineCodeInterpreter.interpret(peFile.getMachineCode(), peFile.getCodeTables(), peFile.getImageBase());
+            interpretedInstructions = App.codeInterpreter.interpret(peFile.getMachineCode(), peFile.getCodeTables(), peFile.getImageBase());
 
         } catch (IOException e) {
             logger.error(e.getMessage());

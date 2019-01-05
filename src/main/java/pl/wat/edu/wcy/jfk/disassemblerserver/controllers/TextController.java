@@ -52,7 +52,7 @@ public class TextController {
 
         PEFile peFile = new PEFile(machineCode);
 
-        interpretedInstructions = App.machineCodeInterpreter.interpret(lists, peFile.getCodeTables(), 0);
+        interpretedInstructions = App.codeInterpreter.interpret(lists, peFile.getCodeTables(), 0);
 
         return interpretedInstructions;
     }
