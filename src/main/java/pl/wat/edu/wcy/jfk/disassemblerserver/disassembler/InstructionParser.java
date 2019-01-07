@@ -6,8 +6,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,8 +18,18 @@ public class InstructionParser {
         this.instructions = new ArrayList<>();
 
         try {
-            File html = new File(coder32path);
-            Document doc = Jsoup.parse(html, "UTF-8");
+            InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(coder32path);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+
+            StringBuilder html = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                html.append(line);
+            }
+
+            bufferedReader.close();
+
+            Document doc = Jsoup.parse(html.toString());
 
             Element refTable = doc.getElementsByClass("ref_table notpublic").first();
             Elements tbodys = refTable.getElementsByTag("tbody");
@@ -35,10 +44,6 @@ public class InstructionParser {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-
-        for (Instruction instruction : instructions) {
-            System.out.println(instruction);
         }
     }
 

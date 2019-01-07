@@ -26,7 +26,6 @@ public class InstructionPatternParser {
 
         try {
             PdfReader pdfReader = new PdfReader(i386path);
-
             String pattern = "(?<=((Opcode[ ]{1,20}Instruction[ ]{1,20}Clocks[ ]{1,20}Description)|(Translation)\\n))[ -~\\n≠←≤]+?(?=(Operation|─|Page|Description))";
             Pattern regex = Pattern.compile(pattern);
 
@@ -644,6 +643,166 @@ public class InstructionPatternParser {
 
         this.oneByteInstructions = lists;
         this.twoByteInstructions = twoBytes;
+
+        String coder32path = "coder32.html";
+        InstructionParser instructionParser = new InstructionParser(coder32path);
+        List<InstructionParser.Instruction> instructions = instructionParser.getInstructions();
+
+        List<InstructionPattern> ob = new ArrayList<>();
+        List<InstructionPattern> tb = new ArrayList<>();
+        for (InstructionParser.Instruction instruction : instructions) {
+            if (instruction.getPrimaryOpcode().length() < 2) continue;
+
+            HexBinaryAdapter hexBinaryAdapter = new HexBinaryAdapter();
+            byte pri = hexBinaryAdapter.unmarshal(instruction.getPrimaryOpcode().substring(0, 2))[0];
+
+            if (instruction.getPrefix0F().length() == 0) {
+                if (oneByteInstructions.get(pri & 0xFF).size() == 0) {
+                    String opcode = instruction.getPrefix() + instruction.getPrimaryOpcode() + instruction.getSecondaryOpcode();
+                    if (instruction.getRegisterOpcodeField().length() > 0) {
+                        opcode = opcode + "/" + instruction.getRegisterOpcodeField();
+                    }
+
+                    String operands = "";
+                    if (instruction.getOperand1().length() > 0) {
+                        operands = operands + instruction.getOperand1();
+                    }
+                    if (instruction.getOperand2().length() > 0) {
+                        operands = operands + "," + instruction.getOperand2();
+                    }
+                    if (instruction.getOperand3().length() > 0) {
+                        operands = operands + "," + instruction.getOperand3();
+                    }
+                    if (instruction.getOperand4().length() > 0) {
+                        operands = operands + "," + instruction.getOperand4();
+                    }
+
+                    if (operands.contains("imm8")) opcode = opcode + "ib";
+                    if (operands.contains("imm16/32")) opcode = opcode + "id";
+                    else if (operands.contains("imm16")) opcode = opcode + "iw";
+                    if (operands.contains("imm32")) opcode = opcode + "id";
+
+                    if (operands.contains("rel8")) opcode = opcode + "cd";
+                    if (operands.contains("rel16/32")) opcode = opcode + "cd";
+                    else if (operands.contains("rel16")) opcode = opcode + "cw";
+                    if (operands.contains("rel32")) opcode = opcode + "cd";
+
+                    if (operands.contains("ptr16:16")) opcode = opcode + "cd";
+                    if (operands.contains("ptr16:32")) opcode = opcode + "cp";
+                    if (operands.contains("ptr32:32")) opcode = opcode + "cp";
+
+                    if (operands.contains("moffs8")) opcode = opcode + "mb";
+                    if (operands.contains("moffs32")) opcode = opcode + "md";
+
+                    InstructionPattern instructionPattern = new InstructionPattern(pri, opcode, instruction.getMnemonic(), operands, -1);
+                    instructionPattern.length = instructionPattern.calculateLengthBasedOnOpcode();
+                    ob.add(instructionPattern);
+                }
+            } else {
+                if (twoByteInstructions.get(pri & 0xFF).size() == 0) {
+                    if (instruction.getPrimaryOpcode().contains("+")) {
+                        for (int i = pri & 0xFF; i <= (pri & 0xFF) + 7; ++i) {
+                            String opcode = instruction.getPrefix0F() + instruction.getPrimaryOpcode();
+
+                            String operands = "";
+                            if (instruction.getOperand1().length() > 0) {
+                                operands = operands + instruction.getOperand1();
+                            }
+                            if (instruction.getOperand2().length() > 0) {
+                                operands = operands + "," + instruction.getOperand2();
+                            }
+                            if (instruction.getOperand3().length() > 0) {
+                                operands = operands + "," + instruction.getOperand3();
+                            }
+                            if (instruction.getOperand4().length() > 0) {
+                                operands = operands + "," + instruction.getOperand4();
+                            }
+
+                            InstructionPattern instructionPattern = new InstructionPattern((byte) i, opcode, instruction.getMnemonic(), operands, -1);
+                            instructionPattern.length = instructionPattern.calculateLengthBasedOnOpcode();
+                            tb.add(instructionPattern);
+                        }
+                    } else {
+                        String opcode = instruction.getPrefix() + instruction.getPrefix0F() + instruction.getPrimaryOpcode() + instruction.getSecondaryOpcode();
+                        if (instruction.getRegisterOpcodeField().length() > 0) {
+                            opcode = opcode + "/" + instruction.getRegisterOpcodeField();
+                        }
+
+                        String operands = "";
+                        if (instruction.getOperand1().length() > 0) {
+                            operands = operands + instruction.getOperand1();
+                        }
+                        if (instruction.getOperand2().length() > 0) {
+                            operands = operands + "," + instruction.getOperand2();
+                        }
+                        if (instruction.getOperand3().length() > 0) {
+                            operands = operands + "," + instruction.getOperand3();
+                        }
+                        if (instruction.getOperand4().length() > 0) {
+                            operands = operands + "," + instruction.getOperand4();
+                        }
+
+                        if (operands.contains("imm8")) opcode = opcode + "ib";
+                        if (operands.contains("imm16/32")) opcode = opcode + "id";
+                        else if (operands.contains("imm16")) opcode = opcode + "iw";
+                        if (operands.contains("imm32")) opcode = opcode + "id";
+
+                        if (operands.contains("rel8")) opcode = opcode + "cd";
+                        if (operands.contains("rel16/32")) opcode = opcode + "cd";
+                        else if (operands.contains("rel16")) opcode = opcode + "cw";
+                        if (operands.contains("rel32")) opcode = opcode + "cd";
+
+                        if (operands.contains("ptr16:16")) opcode = opcode + "cd";
+                        if (operands.contains("ptr16:32")) opcode = opcode + "cp";
+                        if (operands.contains("ptr32:32")) opcode = opcode + "cp";
+
+                        if (operands.contains("moffs8")) opcode = opcode + "mb";
+                        if (operands.contains("moffs32")) opcode = opcode + "md";
+
+                        int length = 2;
+                        if (instruction.getPrefix().length() > 0) length += 1 ;
+                        if (instruction.getSecondaryOpcode().length() > 0) length += 1;
+                        if (opcode.contains("/")) length += 1;
+                        if (opcode.contains("ib")) length += 1;
+                        if (opcode.contains("iw")) length += 2;
+                        if (opcode.contains("id")) length += 4;
+                        if (opcode.contains("cb")) length += 1;
+                        if (opcode.contains("cw")) length += 2;
+                        if (opcode.contains("cd")) length += 4;
+                        if (opcode.contains("cp")) length += 6;
+                        if (opcode.contains("mb")) length += 1;
+                        if (opcode.contains("md")) length += 4;
+
+                        InstructionPattern instructionPattern = new InstructionPattern(pri, opcode, instruction.getMnemonic(), operands, length);
+                        tb.add(instructionPattern);
+                    }
+                }
+            }
+        }
+
+        for (InstructionPattern i : ob) {
+            oneByteInstructions.get(i.priOpcode & 0xFF).add(i);
+        }
+        for (InstructionPattern i : tb) {
+            twoByteInstructions.get(i.priOpcode & 0xFF).add(i);
+        }
+
+        for (int i = 0x00; i <= 0xFF; ++i) {
+            if (oneByteInstructions.get(i).size() > 0) {
+                for (InstructionPattern instructionPattern : oneByteInstructions.get(i)) {
+                    if (instructionPattern.getOperands().contains("moffs8")) {
+                        instructionPattern.opcode = instructionPattern.opcode.substring(0, 2) + "md";
+                        instructionPattern.length = 5;
+
+                        if (instructionPattern.priOpcode == (byte) 0xA0) {
+                            instructionPattern.operands = "AL,moffs32";
+                        } else if (instructionPattern.priOpcode == (byte) 0xA2) {
+                            instructionPattern.operands = "moffs32,AL";
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Getter

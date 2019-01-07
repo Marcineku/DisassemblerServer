@@ -25,6 +25,7 @@ public class PEFile {
     private List<List<Byte>> machineCode;
     private List<Code.SectionTable> codeTables;
     private int imageBase;
+    private int addressOfEntryPoint;
 
     private boolean isPE;
 
@@ -281,6 +282,14 @@ public class PEFile {
             byteBuffer.put(pe.get(0x36));
             byteBuffer.put(pe.get(0x37));
             imageBase = byteBuffer.getInt(0);
+
+            byteBuffer = ByteBuffer.allocate(4);
+            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            byteBuffer.put(pe.get(0x28));
+            byteBuffer.put(pe.get(0x29));
+            byteBuffer.put(pe.get(0x2A));
+            byteBuffer.put(pe.get(0x2B));
+            addressOfEntryPoint = byteBuffer.getInt(0) + imageBase;
         }
 
         @Getter
@@ -376,6 +385,10 @@ public class PEFile {
 
     public int getImageBase() {
         return imageBase;
+    }
+
+    public int getAddressOfEntryPoint() {
+        return addressOfEntryPoint;
     }
 
     public boolean isPE() {

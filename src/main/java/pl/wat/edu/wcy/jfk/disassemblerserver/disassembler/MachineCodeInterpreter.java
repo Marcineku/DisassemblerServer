@@ -329,68 +329,90 @@ public class MachineCodeInterpreter {
             while (p < codeTables.get(l).getMisc()) {
                 int b = list.get(p) & 0xFF;
 
+                int pf = 0;
+
                 List<List<InstructionPatternParser.InstructionPattern>> instructions;
                 int priOpcodeSize = 0;
                 int length = 0;
                 String mnemoAddition = "";
-                String segmentOverridePrefix = "DS";
+                String segmentOverridePrefix = "";
 
                 // Checking for prefixes
-                if (b == 0xF2) {
-                    int tmpB = list.get(p + 1) & 0xFF;
-                    if (tmpB == 0xA6 || tmpB == 0xA7 || tmpB == 0xAE || tmpB == 0xAF) {
-                    } else {
-                        b = tmpB;
+                int pfTmp;
+                do {
+                    pfTmp = pf;
+                    if (b == 0xF2) {
+                        int tmpB = list.get(p + 1 + pf) & 0xFF;
+                        if (tmpB == 0xA6 || tmpB == 0xA7 || tmpB == 0xAE || tmpB == 0xAF) {
+                        } else {
+                            b = tmpB;
+                            priOpcodeSize += 1;
+                            length += 1;
+                            mnemoAddition = "BND";
+                            pf += 1;
+                        }
+                    } else if (b == 0xF3) {
+                        b = list.get(p + 1 + pf) & 0xFF;
                         priOpcodeSize += 1;
                         length += 1;
-                        mnemoAddition = "BND";
+                        mnemoAddition = "REP";
+                        pf += 1;
+                    } else if (b == 0xF0) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        mnemoAddition = "LOCK";
+                        pf += 1;
+                    } else if (b == 0x66) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        mnemoAddition = "data16";
+                        pf += 1;
+                    } else if (b == 0x67) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        mnemoAddition = "addr16";
+                        pf += 1;
+                    } else if (b == 0x2E) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        segmentOverridePrefix = "CS";
+                        pf += 1;
+                    } else if (b == 0x36) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        segmentOverridePrefix = "SS";
+                        pf += 1;
+                    } else if (b == 0x3E) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        segmentOverridePrefix = "DS";
+                        pf += 1;
+                    } else if (b == 0x26) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        segmentOverridePrefix = "ES";
+                        pf += 1;
+                    } else if (b == 0x64) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        segmentOverridePrefix = "FS";
+                        pf += 1;
+                    } else if (b == 0x65) {
+                        b = list.get(p + 1 + pf) & 0xFF;
+                        priOpcodeSize += 1;
+                        length += 1;
+                        segmentOverridePrefix = "GS";
+                        pf += 1;
                     }
-                } else if (b == 0xF3) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    mnemoAddition = "REP";
-                } else if (b == 0xF0) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    mnemoAddition = "LOCK";
-                } else if (b == 0x2E) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    segmentOverridePrefix = "CS";
-                } else if (b == 0x36) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    segmentOverridePrefix = "SS";
-                } else if (b == 0x3E) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    segmentOverridePrefix = "DS";
-                } else if (b == 0x26) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    segmentOverridePrefix = "ES";
-                } else if (b == 0x64) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    segmentOverridePrefix = "FS";
-                } else if (b == 0x65) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    segmentOverridePrefix = "GS";
-                } else if (b == 0x66) {
-                    b = list.get(p + 1) & 0xFF;
-                    priOpcodeSize += 1;
-                    length += 1;
-                    mnemoAddition = "data16";
-                }
+                } while (pfTmp != pf);
 
                 // Checking for instruction type
                 if (b == 0x0F) {
@@ -405,6 +427,7 @@ public class MachineCodeInterpreter {
                 }
 
                 InstructionPatternParser.InstructionPattern instr;
+
                 if (instructions.get(b).size() > 0) {
                     instr = instructions.get(b).get(0);
                 }
@@ -451,9 +474,9 @@ public class MachineCodeInterpreter {
                             InstructionPatternParser.InstructionPattern instruction = instructions.get(b).get(i);
                             if (instruction.getOpcode().contains(digit)) {
                                 instr = instruction;
-                                length += slashRSize.get(b2);
                             }
                         }
+                        length += slashRSize.get(b2);
 
                         boolean sibByte = false;
                         for (int j = 0x04; j <= 0x3C; j += 8) {
@@ -735,6 +758,7 @@ public class MachineCodeInterpreter {
 
                         for (int j = 0; j < operands.length; ++j) {
                             if (operands[j].equals("moffs8")) {
+                                if (segmentOverridePrefix.length() == 0) segmentOverridePrefix = "DS";
                                 operands[j] = segmentOverridePrefix + ":" + String.format("%02X", moffs8);
                             }
                         }
@@ -748,13 +772,21 @@ public class MachineCodeInterpreter {
 
                         for (int j = 0; j < operands.length; ++j) {
                             if (operands[j].equals("moffs32")) {
+                                if (segmentOverridePrefix.length() == 0) segmentOverridePrefix = "DS";
                                 operands[j] = segmentOverridePrefix + ":" + String.format("%08X", md);
                             }
                         }
                     }
                 }
 
-                interpretedInstructionList.add(new InterpretedInstruction(addr, opcode.toString(), mnemoAddition + " " + instr.getMnemo(), operands[0], operands[1], operands[2]));
+                String mnemo = mnemoAddition;
+
+                if (!operands[0].contains(":") && !operands[1].contains(":") && !operands[2].contains(":") && !instr.getOperands().contains("moffs")) {
+                    mnemo = mnemo + " " + segmentOverridePrefix;
+                }
+                mnemo = mnemo + " " + instr.getMnemo();
+
+                interpretedInstructionList.add(new InterpretedInstruction(addr, opcode.toString(), mnemo, operands[0], operands[1], operands[2]));
 
                 p += length;
             }
