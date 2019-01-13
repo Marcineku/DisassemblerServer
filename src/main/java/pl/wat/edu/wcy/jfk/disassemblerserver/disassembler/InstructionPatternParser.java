@@ -803,6 +803,14 @@ public class InstructionPatternParser {
                 }
             }
         }
+
+        for (int i = 0x00; i <= 0xFF; ++i) {
+            if (twoByteInstructions.get(i).size() == 0) continue;
+            InstructionPattern instr = twoByteInstructions.get(i).get(0);
+            if (!instr.getMnemo().contains("BSWAP")) continue;
+
+            instr.opcode = instr.opcode + "d";
+        }
     }
 
     @Getter
