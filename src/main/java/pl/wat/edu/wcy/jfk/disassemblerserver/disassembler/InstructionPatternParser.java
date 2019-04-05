@@ -644,7 +644,7 @@ public class InstructionPatternParser {
         this.oneByteInstructions = lists;
         this.twoByteInstructions = twoBytes;
 
-        String coder32path = "coder32.html";
+        String coder32path = "coder32.txt";
         InstructionParser instructionParser = new InstructionParser(coder32path);
         List<InstructionParser.Instruction> instructions = instructionParser.getInstructions();
 
